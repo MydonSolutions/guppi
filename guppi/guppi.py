@@ -26,8 +26,16 @@ class Guppi():
         except:
             self.nants = -1
 
+        if header.get("TELESCOP", "unknown").lower().strip() == "meerkat" and self.npol == 4:
+            # should warn
+            # 4 polarisations is covering for 2 complexities and 2 pols
+            self.npol = 2
+
         if self.nbits not in [4,8]:
-            raise NotImplementedError("Only 4 and 8-bit data are implemented")
+            raise NotImplementedError(f"Only 4 and 8-bit data are implemented, not {self.nbits}")
+
+        if self.npol not in [1,2]:
+            raise NotImplementedError(f"Only 1 and 2 polarisations are expected, not {self.npol}")
 
         self.data_raw = np.zeros(self.blocsize, dtype=np.int8)
         if self.nbits == 4:
@@ -109,14 +117,22 @@ class Guppi():
         except KeyError as e:
             nants = -1
 
-        if nbits not in [4, 8]:
-            raise NotImplementedError("Only 4 and 8-bit data are implemented")
+        if header.get("TELESCOP", "unknown").lower().strip() == "meerkat" and npol == 4:
+            # should warn
+            # 4 polarisations is covering for 2 complexities and 2 pols
+            npol = 2
 
-        assert npol     == self.npol
-        assert obsnchan == self.obsnchan
-        assert nbits    == self.nbits
-        assert blocsize == self.blocsize
-        assert nants    == self.nants
+        if nbits not in [4,8]:
+            raise NotImplementedError(f"Only 4 and 8-bit data are implemented, not {nbits}")
+
+        if npol not in [1,2]:
+            raise NotImplementedError(f"Only 1 and 2 polarisations are expected, not {npol}")
+
+        assert npol     == self.npol, f"Next header npol is {npol} != {self.npol}"
+        assert obsnchan == self.obsnchan, f"Next header obsnchan is {obsnchan} != {self.obsnchan}"
+        assert nbits    == self.nbits, f"Next header nbits is {nbits} != {self.nbits}"
+        assert blocsize == self.blocsize, f"Next header blocsize is {blocsize} != {self.blocsize}"
+        assert nants    == self.nants, f"Next header nants is {nants} != {self.nants}"
 
         nsamps_per_block = int(blocsize / (2*npol * obsnchan * (nbits/8)))
 
