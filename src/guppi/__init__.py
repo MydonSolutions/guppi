@@ -32,8 +32,9 @@ class GuppiHandler:
     def __init__(self, guppi_filepaths: Union[str, List[str]]):
         if isinstance(guppi_filepaths, str):
             if not os.path.exists(guppi_filepaths):
-                logger.warning(f"Given GUPPI RAW filepath does not exist, assuming it is the stem.")
+                logger.warning("Given GUPPI RAW filepath does not exist, assuming it is the stem.")
                 guppi_filepaths = glob.glob(f"{guppi_filepaths}*.raw")
+                guppi_filepaths.sort()
                 logger.debug(f"Found {guppi_filepaths}.")
             else:
                 guppi_filepaths = [guppi_filepaths]
