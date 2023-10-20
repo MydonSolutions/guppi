@@ -131,9 +131,11 @@ class GuppiHandler:
             self._seek_align_directio()
 
         if gr_header.nof_bits == 4:
-            # every 1 sample is a complex number (4bit + 4bit) = (8bit) => complex64
-            gr_block[0:-1:2], gr_block[1:-1:2] = gr_block//(2**4), gr_block % (2**4)
-        
+            # every 1 sample is a complex number (8bit) => (4bit + 4bit)
+            gr_block = gr_block.repeat(2)
+            gr_block[0::2] = gr_block[0::2] >> 4
+            gr_block[1::2] = gr_block[1::2] << 4 >> 4
+
         # cast up to astype, then construct view (typically as complex)
         gr_block = gr_block.astype(astype).view(viewtype)
 
@@ -148,7 +150,7 @@ class GuppiHandler:
         self._guppi_file_index = 0
         self._guppi_file_handle = None
         self.open_next_file()
-        
+
         block_index = 0
         reference_block_shape = None
         while True:
@@ -199,7 +201,7 @@ class GuppiHandler:
         header.nof_bits = (len(datablock_bytes)*8)//(numpy.prod(datablock.shape)*2)
 
         header_str = header.to_fits()
-        
+
         with open(filepath, file_open_mode) as fio:
             fio.write(header_str.encode())
             if header.directio:

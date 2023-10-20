@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guppi"
-version = "2.0.0"
+version = "2.0.1"
 authors = [
   { name="Wael Farah", email="wael.a.farah@gmail.com" },
   { name="Ross Donnachie", email="code@radonn.co.za" },
