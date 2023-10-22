@@ -12,10 +12,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.ERROR)
 
 
-class GuppiHandler:
-    """
-    GUPPI RAW file reader
-    """
+class GuppiRawHandler:
 
     NBITS_NUMPY_INTTYPE_MAP = {
         4: numpy.int8,
@@ -32,7 +29,10 @@ class GuppiHandler:
     def __init__(self, guppi_filepaths: Union[str, List[str]]):
         if isinstance(guppi_filepaths, str):
             if not os.path.exists(guppi_filepaths):
-                logger.warning("Given GUPPI RAW filepath does not exist, assuming it is the stem.")
+                logger.warning(
+                    "Given GUPPI RAW filepath does not exist, "
+                    "assuming it is the stem."
+                )
                 guppi_filepaths = glob.glob(f"{guppi_filepaths}*.raw")
                 guppi_filepaths.sort()
                 logger.debug(f"Found {guppi_filepaths}.")
@@ -49,7 +49,8 @@ class GuppiHandler:
             if len(header_entry) == 0:
                 raise EOFError()
             if len(header_entry) < 80:
-                raise ValueError("Could not read 80 characters for a header entry.")
+                raise ValueError(
+                    "Could not read 80 characters for a header entry.")
             return header_entry
         except UnicodeDecodeError as err:
             pos = self._guppi_file_handle.tell()
@@ -57,10 +58,13 @@ class GuppiHandler:
             preceeding_bytes = self._guppi_file_handle.read(240)
             next_bytes = self._guppi_file_handle.read(240)
 
-            logger.error(f"UnicodeDecodeError in {self._guppi_filepaths[self._guppi_file_index]} at position: {pos}")
+            logger.error(
+                "UnicodeDecodeError in "
+                f"{self._guppi_filepaths[self._guppi_file_index]} "
+                f"at position: {pos}"
+            )
             logger.error(f"Preceeding bytes: {preceeding_bytes}")
             logger.error(f"Proceeding bytes: {next_bytes}")
-            # logger.error(f"Block #{raw_blocks} starting at {block_header_start}")
 
             raise RuntimeError("Failed to read GUPPI header entry.") from err
 
@@ -74,9 +78,9 @@ class GuppiHandler:
             try:
                 try:
                     value = int(value)
-                except:
+                except ValueError:
                     value = float(value)
-            except:
+            except ValueError:
                 # must be a str value, drop enclosing single-quotes
                 assert value[0] == value[-1] == "'"
                 value = value[1:-1].strip()
@@ -95,7 +99,10 @@ class GuppiHandler:
             self._guppi_file_handle.close()
             self._guppi_file_index += 1
 
-        self._guppi_file_handle = open(self._guppi_filepaths[self._guppi_file_index], 'rb')
+        self._guppi_file_handle = open(
+            self._guppi_filepaths[self._guppi_file_index],
+            'rb'
+        )
 
     def read_next_header(self) -> GuppiRawHeader:
         entry_iter = self._header_entries()
@@ -121,11 +128,13 @@ class GuppiHandler:
         if astype is None:
             astype = numpy.float32
         if viewtype is None:
-            viewtype = GuppiHandler.NUMPY_INTTYPE_COMPLEXVIEWTYPE_MAP[astype]
+            viewtype = GuppiRawHandler.NUMPY_INTTYPE_COMPLEXVIEWTYPE_MAP[
+                astype
+            ]
 
         gr_block = numpy.fromfile(
             self._guppi_file_handle,
-            dtype=GuppiHandler.NBITS_NUMPY_INTTYPE_MAP[gr_header.nof_bits],
+            dtype=GuppiRawHandler.NBITS_NUMPY_INTTYPE_MAP[gr_header.nof_bits],
             count=gr_header.blocksize
         )
         if gr_header.directio:
@@ -134,8 +143,9 @@ class GuppiHandler:
         if gr_header.nof_bits == 4:
             # every 1 sample is a complex number (8bit) => (4bit + 4bit)
             gr_block = gr_block.repeat(2)
-            gr_block[0::2] = gr_block[0::2] >> 4
-            gr_block[1::2] = gr_block[1::2] << 4 >> 4
+            gr_block[0::2] >>= 4
+            gr_block[1::2] <<= 4
+            gr_block[1::2] >>= 4
 
         # cast up to astype, then construct view (typically as complex)
         gr_block = gr_block.astype(astype).view(viewtype)
@@ -165,7 +175,10 @@ class GuppiHandler:
                 self.validate_header(header)
                 reference_block_shape = header.blockshape
             elif reference_block_shape != header.blockshape:
-                raise RuntimeError(f"The header indicates a different blockshape at block #{block_index} ")
+                raise RuntimeError(
+                    "The header indicates a different blockshape at block "
+                    f"#{block_index}."
+                )
 
             yield (
                 header,
@@ -181,10 +194,16 @@ class GuppiHandler:
             self._guppi_file_handle.close()
 
     def validate_header(self, header):
-        if header.nof_bits not in GuppiHandler.NBITS_NUMPY_INTTYPE_MAP:
-            raise NotImplementedError(f"Only {list(GuppiHandler.NBITS_NUMPY_INTTYPE_MAP.keys())}-bit data are implemented, cannot handle {header.nof_bits}.")
-        if header.nof_polarizations not in [1,2]:
-            raise NotImplementedError(f"Only 1 and 2 polarizations are expected, not {header.nof_polarizations}.")
+        if header.nof_bits not in GuppiRawHandler.NBITS_NUMPY_INTTYPE_MAP:
+            raise NotImplementedError(
+                f"Only {list(GuppiRawHandler.NBITS_NUMPY_INTTYPE_MAP.keys())}-bit"
+                f" data are implemented, cannot handle {header.nof_bits}."
+            )
+        if header.nof_polarizations not in [1, 2]:
+            raise NotImplementedError(
+                "Only 1 and 2 polarizations are expected, "
+                f"not {header.nof_polarizations}."
+            )
 
     @staticmethod
     def write_to_file(
@@ -199,7 +218,9 @@ class GuppiHandler:
         header.nof_polarizations = P
         datablock_bytes = datablock.tobytes()
         header.blocksize = len(datablock_bytes)
-        header.nof_bits = (len(datablock_bytes)*8)//(numpy.prod(datablock.shape)*2)
+        header.nof_bits = (
+            len(datablock_bytes) * 8
+        )//(numpy.prod(datablock.shape)*2)
 
         header_str = header.to_fits()
 
