@@ -23,7 +23,8 @@ class GuppiRawHandler:
         numpy.int8: numpy.dtype([('re', numpy.int8), ('im', numpy.int8)]),
         numpy.int16: numpy.dtype([('re', numpy.int16), ('im', numpy.int16)]),
         numpy.int32: numpy.dtype([('re', numpy.int32), ('im', numpy.int32)]),
-        numpy.float32: numpy.complex64
+        numpy.float32: numpy.complex64,
+        numpy.float64: numpy.complex128,
     }
 
     def __init__(self, guppi_filepaths: Union[str, List[str]]):
