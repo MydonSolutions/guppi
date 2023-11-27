@@ -158,6 +158,34 @@ class GuppiRawHandler:
         if gr_header.directio:
             self._seek_align_directio()
 
+    def headers(self):
+        self._guppi_file_index = 0
+        self._guppi_file_handle = None
+        self.open_next_file()
+
+        block_index = 0
+        reference_block_shape = None
+        while True:
+            try:
+                header = self.read_next_header()
+            except IndexError:
+                break
+            block_index += 1
+
+            if reference_block_shape is None:
+                self.validate_header(header)
+                reference_block_shape = header.blockshape
+            elif reference_block_shape != header.blockshape:
+                raise RuntimeError(
+                    "The header indicates a different blockshape at block "
+                    f"#{block_index}."
+                )
+
+            self.seek_past_block(
+                header
+            )
+            yield header
+
     def blocks(self, astype=None, viewtype=None):
         self._guppi_file_index = 0
         self._guppi_file_handle = None
