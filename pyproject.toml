@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guppi"
-version = "2.1.3"
+version = "2.1.4"
 authors = [
-  { name="Wael Farah", email="wael.a.farah@gmail.com" },
   { name="Ross Donnachie", email="code@radonn.co.za" },
+  { name="Wael Farah", email="wael.a.farah@gmail.com" },
 ]
 description = "A simple Guppi RAW multi-antenna reader"
 readme = "README.md"
