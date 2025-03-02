@@ -5,7 +5,7 @@ from typing import List, Tuple, Union
 
 import numpy
 
-from guppi.header import GuppiRawHeader, auto_init_GuppiRawHeader
+from guppi.header import GuppiRawHeader, auto_init_GuppiRawHeader, GuppiRawDatatype
 
 
 logger = logging.getLogger(__name__)
@@ -13,7 +13,8 @@ logger.setLevel(logging.ERROR)
 
 
 class GuppiRawHandler:
-    NBITS_NUMPY_INTTYPE_MAP = {4: numpy.int8, 8: numpy.int8}
+    NBITS_NUMPY_INTTYPE_MAP = {4: numpy.int8, 8: numpy.int8, 16: numpy.int16, 32: numpy.int32}
+    NBITS_NUMPY_FLTTYPE_MAP = {16: numpy.float16, 32: numpy.float32, 64: numpy.float64}
 
     NUMPY_INTTYPE_COMPLEXVIEWTYPE_MAP = {
         numpy.int8: numpy.dtype([("re", numpy.int8), ("im", numpy.int8)]),
@@ -135,15 +136,23 @@ class GuppiRawHandler:
         if viewtype is None:
             viewtype = GuppiRawHandler.NUMPY_INTTYPE_COMPLEXVIEWTYPE_MAP[astype]
 
+        file_dtype = None
+        if gr_header.sample_datatype == GuppiRawDatatype.integer:
+            file_dtype = GuppiRawHandler.NBITS_NUMPY_INTTYPE_MAP[gr_header.nof_bits]
+        if gr_header.sample_datatype == GuppiRawDatatype.floating_point:
+            file_dtype = GuppiRawHandler.NBITS_NUMPY_FLTTYPE_MAP[gr_header.nof_bits]
+
+        bytes_per_elem = max(1, gr_header.nof_bits//8)
+
         gr_block = numpy.fromfile(
             self._guppi_file_handle,
-            dtype=GuppiRawHandler.NBITS_NUMPY_INTTYPE_MAP[gr_header.nof_bits],
-            count=gr_header.blocksize,
+            dtype=file_dtype,
+            count=gr_header.blocksize//bytes_per_elem,
         )
         if gr_header.directio:
             self._seek_align_directio()
 
-        if gr_header.nof_bits == 4:
+        if gr_header.sample_datatype == GuppiRawDatatype.integer and gr_header.nof_bits == 4:
             # every 1 sample is a complex number (8bit) => (4bit + 4bit)
             gr_block = gr_block.repeat(2)
             gr_block[0::2] >>= 4
@@ -223,10 +232,20 @@ class GuppiRawHandler:
             self._guppi_file_handle.close()
 
     def validate_header(self, header):
-        if header.nof_bits not in GuppiRawHandler.NBITS_NUMPY_INTTYPE_MAP:
+        if (header.sample_datatype is GuppiRawDatatype.integer
+            and header.nof_bits not in GuppiRawHandler.NBITS_NUMPY_INTTYPE_MAP
+        ):
             raise NotImplementedError(
                 f"Only {list(GuppiRawHandler.NBITS_NUMPY_INTTYPE_MAP.keys())}-bit"
                 f" data are implemented, cannot handle {header.nof_bits}."
+            )
+        if (header.sample_datatype is GuppiRawDatatype.floating_point
+            and header.nof_bits not in GuppiRawHandler.NBITS_NUMPY_FLTTYPE_MAP
+        ):
+            raise NotImplementedError(
+                f"Only {list(GuppiRawHandler.NBITS_NUMPY_FLTTYPE_MAP.keys())}-bit"
+                f" floating-point data are implemented, cannot handle "
+                f"{header.nof_bits}."
             )
         if header.nof_polarizations not in [1, 2]:
             raise NotImplementedError(

@@ -1,4 +1,4 @@
-from rao_keyvalue_property_mixin_classes.guppi_raw import GuppiRawProperties
+from rao_keyvalue_property_mixin_classes.guppi_raw import GuppiRawProperties, GuppiRawDatatype
 from rao_keyvalue_property_mixin_classes.hpdaq_ata import HpdaqAtaProperties
 from rao_keyvalue_property_mixin_classes.hpdaq_cosmic import HpdaqCosmicProperties
 from rao_keyvalue_property_mixin_classes.hpdaq_meerkat import HpdaqMeerkatProperties
