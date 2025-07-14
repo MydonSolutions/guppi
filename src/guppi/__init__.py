@@ -1,7 +1,7 @@
 import os
 import glob
 import logging
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Callable
 
 import numpy
 
@@ -24,7 +24,11 @@ class GuppiRawHandler:
         numpy.float64: numpy.complex128,
     }
 
-    def __init__(self, guppi_filepaths: Union[str, List[str]]):
+    def __init__(
+        self,
+        guppi_filepaths: Union[str, List[str]],
+        header_constructor: Callable[[dict], GuppiRawHeader] = auto_init_GuppiRawHeader
+    ):
         if isinstance(guppi_filepaths, str):
             if not os.path.exists(guppi_filepaths):
                 logger.warning(
@@ -50,6 +54,8 @@ class GuppiRawHandler:
         self._guppi_filepaths = guppi_filepaths
         self._guppi_file_index = 0
         self._guppi_file_handle = None
+        
+        self._header_constructor = header_constructor
 
     def _read_header_entry(self) -> str:
         header_entry = self._guppi_file_handle.read(80).decode()
@@ -122,8 +128,8 @@ class GuppiRawHandler:
             logger.error(f"Proceeding bytes: {next_bytes}")
 
             raise RuntimeError(f"Failed to read GUPPI header: '{self._guppi_filepaths[self._guppi_file_index]}' near byte {pos} .") from err
-
-        gr_header: GuppiRawHeader = auto_init_GuppiRawHeader(header_entries)
+            
+        gr_header: GuppiRawHeader = self._header_constructor(header_entries)
 
         if gr_header.directio:
             self._seek_align_directio()
