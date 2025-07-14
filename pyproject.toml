@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "guppi"
-version = "2.1.6"
+version = "2.2.0"
 authors = [
   { name="Ross Donnachie", email="code@radonn.co.za" },
   { name="Wael Farah", email="wael.a.farah@gmail.com" },
@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
   "numpy",
-  "rao_keyvalue_property_mixin_classes @ git+https://github.com/MydonSolutions/rao_keyvalue_property_mixin_classes", # >= 0.5.4
+  "rao_keyvalue_property_mixin_classes >= 0.6.0", # @ git+https://github.com/MydonSolutions/rao_keyvalue_property_mixin_classes
 ]
 
 [project.scripts]
