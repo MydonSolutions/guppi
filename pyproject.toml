@@ -19,7 +19,7 @@ classifiers = [
 ]
 dependencies = [
   "numpy",
-  "rao_keyvalue_property_mixin_classes >= 0.6.0", # @ git+https://github.com/MydonSolutions/rao_keyvalue_property_mixin_classes
+  "rao_keyvalue_property_mixin_classes @ git+https://github.com/MydonSolutions/rao_keyvalue_property_mixin_classes"
 ]
 
 [project.scripts]
